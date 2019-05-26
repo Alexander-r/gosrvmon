@@ -1,0 +1,31 @@
+{
+  "DB": {
+    "Type": "",
+    "Host": "",
+    "Port": "5432",
+    "User": "",
+    "Password": "",
+    "Database":  "gosrvmon.db"
+  },
+  "Listen": {
+    "Address": "",
+    "Port": "8000",
+    "ReadTimeout": 30,
+    "WriteTimeout": 60,
+    "WebAuth": {
+      "Enable": false,
+      "User": "",
+      "Password": ""
+    }
+  },
+  "Checks": {
+    "Timeout": 10,
+    "Interval": 60,
+    "PingRetryCount": 4,
+    "HTTPMethod": "HEAD",
+    "PerformChecks": true,
+    "UseRemoteChecks": true,
+    "RemoteChecksURLs": [ ],
+    "AllowSingleChecks": true
+  }
+}

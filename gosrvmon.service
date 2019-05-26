@@ -1,0 +1,13 @@
+[Unit]
+Description=gosrvmon
+After=syslog.target
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/gosrvmon -config /etc/gosrvmon.json
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

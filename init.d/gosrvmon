@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=15
+
+SERVICE_WRITE_PID=1
+SERVICE_DAEMONIZE=1
+
+start() {
+        service_start /usr/bin/gosrvmon -config /etc/gosrvmon.json
+}
+
+stop() {
+        service_stop /usr/bin/gosrvmon
+}

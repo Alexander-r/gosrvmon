@@ -1,0 +1,18 @@
+image: golang:latest
+
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get -tags purego modernc.org/ql
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get github.com/lib/pq
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/icmp
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/ipv4
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/ipv6
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o gosrvmon .
+
+  artifacts:
+    paths:
+    - gosrvmon
