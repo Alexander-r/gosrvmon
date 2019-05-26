@@ -65,3 +65,31 @@ Host can be added by domain name or by IP address. Check method is selected base
  * `UseRemoteChecks` - if enabled application will request additional checks data from remote servers. If multiple servers monitor the same host then in the resulting chart the host will be considered online if at least one server was able to connect to it. If multiple servers were able to connect to the host then the lowest latency will be displayed.
  * `RemoteChecksURLs` - an array of servers from which additional data will be requested. Multiple servers can be set like this : `[ "http://192.168.1.1:8000/api/checks", "http://192.168.1.2:8000/api/checks" , "http://192.168.1.3:8000/api/checks" ]`
  * `AllowSingleChecks` - if enables single checks of host current state can be performed. The result of this check will be presented as json data or in web interface and will not be stored to database.
+
+## Docker
+
+Gosrvmon is also provided as a Docker container:
+
+```
+docker pull sonnix1/gosrvmon
+```
+
+To run the container a valid configuration is required. Database structure needs to be initialised as described in setup section.
+
+For example if you have your configuration file prepared on your host system at `/opt/gosrvmon/config.json` and would like to store date in embedded database in file `/opt/gosrvmon/gosrvmon.db` then you should set `"Database":  "/opt/gosrvmon/gosrvmon.db"` in the configuration file. Then run the initialisation:
+
+```
+docker run -v /opt/gosrvmon/:/opt/gosrvmon/ sonnix1/gosrvmon -config /opt/gosrvmon/config.json -init
+```
+
+After that you would be able to run the container:
+
+```
+docker run -d -v /opt/gosrvmon/:/opt/gosrvmon/ -p 8000:8000 sonnix1/gosrvmon -config /opt/gosrvmon/config.json
+```
+
+Container has default configuration file located at `/config.json`. It can be used for testing using in-memory database. This does not require additional initialisation but the data will reset on container restart. To use this configuration file run:
+
+```
+docker run -d -p 8000:8000 sonnix1/gosrvmon -config /config.json
+```

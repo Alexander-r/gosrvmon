@@ -1,6 +1,6 @@
 FROM golang:latest as builder
 
-WORKDIR $GOPATH/src/github.com/Alexander-r/gosrvmon_test
+WORKDIR $GOPATH/src/github.com/Alexander-r/gosrvmon
 
 COPY . .
 
@@ -17,7 +17,7 @@ FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /usr/bin/gosrvmon /usr/bin/gosrvmon
-COPY --from=builder /etc/gosrvmon.json /usr/bin/config.json
+COPY --from=builder /etc/gosrvmon.json /config.json
 
 EXPOSE 8000
 
