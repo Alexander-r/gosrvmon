@@ -25,13 +25,15 @@ A sample configuration can be found in [config.json](config.json) file.
 
 Gosrvmon requires a database to store the resulting data. It can use PostgreSQL or an embedded database which will write the data to a single file. It can also store data in-memory. In-memory data is reset on every application restart.
 
-PostgreSQL or embedded database require structure initialisation. In-memory database does not require initialisation. After initial configuration is done to perform database initialisation gosrvmon can be run with `-init` option.
+PostgreSQL or embedded database require structure initialization. In-memory database will be initialized automatically. If a file for embedded database does not exist then it will be created and initialized. 
+
+PostgreSQL database can be initialized by running  gosrvmon with `-init` option.
 
 ```
 gosrvmon -config /etc/gosrvmon.json -init
 ```
 
-PostgreSQL can also be initialised manually using [init.sql](init.sql).
+PostgreSQL can also be initialized manually using [init.sql](init.sql).
 
 Host can be added by domain name or by IP address. Check method is selected based based on how a how a host is added for monitoring. `http://example.org/` would result in HTTP check. `example.org:80` would result in TCP check. `example.org` would result in ICMP check. IPv6 hosts are also supported (for example `http://[2606:2800:220:1:248:1893:25c8:1946]\`, `[2606:2800:220:1:248:1893:25c8:1946]:80` , `2606:2800:220:1:248:1893:25c8:1946`). If host is added by domain name which has multiple A and AAAA records and ICMP check method is used then the request will be sent to every address and host is considered online if any of the addresses sends the response.
 
@@ -66,6 +68,10 @@ Host can be added by domain name or by IP address. Check method is selected base
  * `RemoteChecksURLs` - an array of servers from which additional data will be requested. Multiple servers can be set like this : `[ "http://192.168.1.1:8000/api/checks", "http://192.168.1.2:8000/api/checks" , "http://192.168.1.3:8000/api/checks" ]`
  * `AllowSingleChecks` - if enables single checks of host current state can be performed. The result of this check will be presented as json data or in web interface and will not be stored to database.
 
+### Chart
+ * `MaxRttScale` - Maximum timeout value for chart Y scale.
+ * `DynamicRttScale` - if enabled a minimal required timeout value for chart Y scale would be used up to MaxRttScale. If disabled then the scale will always go up to MaxRttScale.
+
 ## Docker
 
 Gosrvmon is also provided as a Docker container:
@@ -74,21 +80,23 @@ Gosrvmon is also provided as a Docker container:
 docker pull sonnix1/gosrvmon
 ```
 
-To run the container a valid configuration is required. Database structure needs to be initialised as described in setup section.
+To run the container a valid configuration is required. Database structure needs to be initialized as described in setup section.
 
-For example if you have your configuration file prepared on your host system at `/opt/gosrvmon/config.json` and would like to store date in embedded database in file `/opt/gosrvmon/gosrvmon.db` then you should set `"Database":  "/opt/gosrvmon/gosrvmon.db"` in the configuration file. Then run the initialisation:
+To initialize database using docker container run:
 
 ```
 docker run -v /opt/gosrvmon/:/opt/gosrvmon/ sonnix1/gosrvmon -config /opt/gosrvmon/config.json -init
 ```
 
-After that you would be able to run the container:
+Run the docker container:
 
 ```
 docker run -d -v /opt/gosrvmon/:/opt/gosrvmon/ -p 8000:8000 sonnix1/gosrvmon -config /opt/gosrvmon/config.json
 ```
 
-Container has default configuration file located at `/config.json`. It can be used for testing using in-memory database. This does not require additional initialisation but the data will reset on container restart. To use this configuration file run:
+Don't forget to provide a valid volume with configuration file and optionally database file if embedded database is used.
+
+Container has default configuration file located at `/config.json`. It can be used for testing using in-memory database. This does not require additional initialization or setup but the data will reset on container restart. To use this configuration file run:
 
 ```
 docker run -d -p 8000:8000 sonnix1/gosrvmon -config /config.json
