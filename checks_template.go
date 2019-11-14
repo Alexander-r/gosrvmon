@@ -115,8 +115,12 @@ func checksChart(w http.ResponseWriter, r *http.Request) {
 	//RemoteChecks
 	dt := time.Duration(Config.Checks.Interval) * time.Second
 	dataM := make(map[time.Time]ChecksData)
+	var maxRtt int64 = 0
 	for _, d := range data {
 		dataM[d.Timestamp.Truncate(dt).UTC()] = d
+		if d.Rtt > maxRtt {
+			maxRtt = d.Rtt
+		}
 	}
 
 	if Config.Checks.UseRemoteChecks {
@@ -136,8 +140,14 @@ func checksChart(w http.ResponseWriter, r *http.Request) {
 					if dr.Up {
 						if !dl.Up {
 							dataM[ts] = dr
+							if dr.Rtt > maxRtt {
+								maxRtt = dr.Rtt
+							}
 						} else if dr.Rtt < dl.Rtt {
 							dataM[ts] = dr
+							if dr.Rtt > maxRtt {
+								maxRtt = dr.Rtt
+							}
 						}
 					}
 				} else {
@@ -148,7 +158,20 @@ func checksChart(w http.ResponseWriter, r *http.Request) {
 	}
 	//RemoteChecks end
 
-	chart := getChart(1280, 720, chkReq, &dataM)
+	var chartMaxRtt int64 = Config.Chart.MaxRttScale
+
+	maxRtt = (maxRtt / 1000000) + 1
+	if Config.Chart.DynamicRttScale {
+		dynamicMaxRtt := (maxRtt / 100) * 100
+		if maxRtt%100 > 0 {
+			dynamicMaxRtt += 100
+		}
+		if dynamicMaxRtt < Config.Chart.MaxRttScale && dynamicMaxRtt > 0 {
+			chartMaxRtt = dynamicMaxRtt
+		}
+	}
+
+	chart := getChart(1280, 720, chartMaxRtt, chkReq, &dataM)
 
 	w.Header().Set("Content-Type", "image/svg+xml")
 	_, err = w.Write([]byte(chart))

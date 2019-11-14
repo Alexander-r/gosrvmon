@@ -27,5 +27,9 @@
     "UseRemoteChecks": true,
     "RemoteChecksURLs": [ ],
     "AllowSingleChecks": true
+  },
+  "Chart": {
+    "MaxRttScale": 200,
+    "DynamicRttScale": false
   }
 }

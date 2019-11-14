@@ -21,14 +21,14 @@ type ChartData struct {
 	Up        ChartState
 }
 
-func getChart(width int64, height int64, chkReq ChecksRequest, dataM *map[time.Time]ChecksData) string {
+func getChart(width int64, height int64, maxRtt int64, chkReq ChecksRequest, dataM *map[time.Time]ChecksData) string {
 	dt := time.Duration(Config.Checks.Interval) * time.Second
 	if chkReq.Start.Truncate(dt).Equal(chkReq.End.Truncate(dt)) || chkReq.Start.Truncate(dt).Add(dt).After(chkReq.End.Truncate(dt)) {
 		//TODO: error
 		return ""
 	}
 
-	var fontSize int64 = 12
+	var fontSize int64 = 11
 	var chart strings.Builder
 	var xOffset = fontSize * 3
 	var yOffsetBottom = height - fontSize*3
@@ -142,11 +142,9 @@ rect.i {
 		chart.WriteString(chkReq.Start.Truncate(dt).Add(time.Duration(stepT*i) * time.Nanosecond).Format("15:04:05"))
 		chart.WriteString("</text>\n")
 	}
-	//TODO: replace 200 ms with calculated value for scale
-	//Config.Checks.Timeout
 	//y axis milliseconds
 	var numberOfStepsY int64 = 20
-	scaleTimeout := time.Millisecond * 200
+	scaleTimeout := time.Millisecond * time.Duration(maxRtt)
 	stepTy := scaleTimeout.Nanoseconds() / 1000000 / numberOfStepsY
 	stepPxy := float64(yOffsetBottom-yOffsetTop) / float64(numberOfStepsY)
 	for i := int64(0); i <= numberOfStepsY; i++ {

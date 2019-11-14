@@ -36,6 +36,10 @@ type Configuration struct {
 		RemoteChecksURLs  []string
 		AllowSingleChecks bool
 	}
+	Chart struct {
+		MaxRttScale     int64
+		DynamicRttScale bool
+	}
 }
 
 var Config = Configuration{}
@@ -56,5 +60,8 @@ func loadConfiguration(configPath string) {
 	}
 	if Config.Checks.PingRetryCount < 1 {
 		Config.Checks.PingRetryCount = 1
+	}
+	if Config.Chart.MaxRttScale <= 0 {
+		Config.Chart.MaxRttScale = 200
 	}
 }
