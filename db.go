@@ -5,6 +5,7 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	_ "modernc.org/ql/driver"
+	"os"
 	"strings"
 	"time"
 )
@@ -28,11 +29,21 @@ func dBConnect() error {
 		connStr.WriteString(Config.DB.User)
 		connStr.WriteString(" password=")
 		connStr.WriteString(Config.DB.Password)
-		connStr.WriteString(" sslmode=disable connect_timeout=120")
+		connStr.WriteString(" sslmode=disable TimeZone=utc connect_timeout=120")
 
 		db, err = sql.Open("postgres", connStr.String())
 	case "ql":
+		var performInit bool = false
+		if _, err = os.Stat(Config.DB.Database); os.IsNotExist(err) {
+			performInit = true
+		}
 		db, err = sql.Open("ql2", Config.DB.Database)
+		if err != nil {
+			return err
+		}
+		if performInit {
+			err = dBInit()
+		}
 	default:
 		db, err = sql.Open("ql-mem", "gosrvmon.db")
 		if err != nil {
