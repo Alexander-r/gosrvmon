@@ -174,6 +174,7 @@ rect.i {
 	prevState := chartStateFirst
 	var prevStateCount int64 = 0
 	var chartRtt strings.Builder
+	var avgRtt int64 = 0
 	for t := chkReq.Start.Truncate(dt).Add(dt); t.Before(chkReq.End.Truncate(dt)) || t.Equal(chkReq.End.Truncate(dt)); t = t.Add(dt) {
 		var curState ChartState
 		d, ok := (*dataM)[t.UTC()]
@@ -194,6 +195,7 @@ rect.i {
 				chartRtt.WriteString(strconv.FormatFloat(curHeight, 'f', -1, 64))
 				chartRtt.WriteString("\" class=\"i\"/>\n")
 				statUp++
+				avgRtt += d.Rtt
 			} else {
 				curState = chartStateDown
 				statDown++
@@ -241,6 +243,9 @@ rect.i {
 			prevStateCount++
 		}
 		i++
+	}
+	if statUp != 0 && avgRtt != 0 {
+		avgRtt = avgRtt / statUp
 	}
 	//TODO: avoid copy
 	switch prevState {
@@ -291,7 +296,9 @@ rect.i {
 	chart.WriteString(strconv.FormatFloat(float64(100*statDown)/float64(i), 'f', 2, 64))
 	chart.WriteString("% Unknown ")
 	chart.WriteString(strconv.FormatFloat(float64(100*statNa)/float64(i), 'f', 2, 64))
-	chart.WriteString("%</text>\n")
+	chart.WriteString("% Average RTT ")
+	chart.WriteString(time.Duration(avgRtt).String())
+	chart.WriteString("</text>\n")
 	chart.WriteString("</svg>\n")
 	return chart.String()
 }
