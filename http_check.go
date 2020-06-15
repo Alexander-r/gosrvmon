@@ -21,13 +21,17 @@ func HttpCheck(targetUrl string, metod string) (rtt int64, up bool, err error) {
 		},
 	}
 
-	req, err := http.NewRequest(metod, targetUrl, nil)
+	var req *http.Request
+	req, err = http.NewRequest(metod, targetUrl, nil)
+	if err != nil {
+		return rtt, false, err
+	}
+	req = req.WithContext(ctx)
 
 	start := time.Now()
-	resp, err := client.Do(req)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
+	var resp *http.Response
+	resp, err = client.Do(req)
+
 	rtt = int64(time.Since(start))
 
 	if err != nil {
@@ -64,6 +68,13 @@ func HttpCheck(targetUrl string, metod string) (rtt int64, up bool, err error) {
 			}
 		}
 		return rtt, false, err
+	}
+
+	if resp != nil {
+		err = resp.Body.Close()
+		if err != nil {
+			return rtt, false, err
+		}
 	}
 
 	if !(resp.StatusCode >= 200 && resp.StatusCode <= 399) {

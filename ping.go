@@ -19,7 +19,8 @@ func IsIPv4(ad string) bool {
 }
 
 func PingCheck(host string) (rtt int64, up bool, err error) {
-	addr, err := net.LookupIP(host)
+	var addr []net.IP
+	addr, err = net.LookupIP(host)
 	if err != nil {
 		return -1, false, nil
 	}

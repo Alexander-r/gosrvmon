@@ -137,7 +137,8 @@ CREATE TABLE checks
 
 func getHostsList() (hosts []string, err error) {
 	hosts = make([]string, 0)
-	stmt, err := db.Prepare("SELECT host FROM hosts;")
+	var stmt *sql.Stmt
+	stmt, err = db.Prepare("SELECT host FROM hosts;")
 	if err != nil {
 		return hosts, err
 	}
@@ -167,7 +168,8 @@ func addHost(newHost string) error {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare("INSERT INTO hosts (host) VALUES ($1);")
+	var stmt *sql.Stmt
+	stmt, err = tx.Prepare("INSERT INTO hosts (host) VALUES ($1);")
 	if err != nil {
 		e := tx.Rollback()
 		if e != nil {
@@ -208,7 +210,8 @@ func deleteHost(newHost string) error {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare("DELETE FROM hosts WHERE host=$1;")
+	var stmt *sql.Stmt
+	stmt, err = tx.Prepare("DELETE FROM hosts WHERE host=$1;")
 	if err != nil {
 		e := tx.Rollback()
 		if e != nil {
@@ -262,12 +265,14 @@ func checkHostExists(newHost string) error {
 func saveCheck(host string, checkTime time.Time, rtt int64, up bool) error {
 	var err error
 
-	tx, err := db.Begin()
+	var tx *sql.Tx
+	tx, err = db.Begin()
 	if err != nil {
 		return err
 	}
 
-	stmt, err := tx.Prepare("INSERT INTO checks (host, check_time, rtt, up) VALUES ($1, $2, $3, $4);")
+	var stmt *sql.Stmt
+	stmt, err = tx.Prepare("INSERT INTO checks (host, check_time, rtt, up) VALUES ($1, $2, $3, $4);")
 	if err != nil {
 		e := tx.Rollback()
 		if e != nil {
@@ -304,13 +309,15 @@ func saveCheck(host string, checkTime time.Time, rtt int64, up bool) error {
 
 func getChecksData(chkReq ChecksRequest) (cData []ChecksData, err error) {
 	cData = make([]ChecksData, 0)
-	stmt, err := db.Prepare("SELECT check_time, rtt, up FROM checks WHERE host = $1 AND check_time >= $2 and check_time <= $3;")
+	var stmt *sql.Stmt
+	stmt, err = db.Prepare("SELECT check_time, rtt, up FROM checks WHERE host = $1 AND check_time >= $2 and check_time <= $3;")
 	if err != nil {
 		return cData, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query(chkReq.Host, chkReq.Start, chkReq.End)
+	var rows *sql.Rows
+	rows, err = stmt.Query(chkReq.Host, chkReq.Start, chkReq.End)
 	if err != nil {
 		return cData, err
 	}
@@ -332,7 +339,8 @@ func getChecksData(chkReq ChecksRequest) (cData []ChecksData, err error) {
 }
 
 func getLastCheckData(host string) (cData ChecksData, err error) {
-	stmt, err := db.Prepare("SELECT check_time, rtt, up FROM checks WHERE host = $1 ORDER BY check_time DESC LIMIT 1;")
+	var stmt *sql.Stmt
+	stmt, err = db.Prepare("SELECT check_time, rtt, up FROM checks WHERE host = $1 ORDER BY check_time DESC LIMIT 1;")
 	if err != nil {
 		return cData, err
 	}

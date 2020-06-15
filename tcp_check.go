@@ -17,7 +17,8 @@ func TcpCheck(host string) (rtt int64, up bool, err error) {
 	}
 
 	start := time.Now()
-	conn, err := net.DialTimeout(network, host, time.Duration(Config.Checks.Timeout)*time.Second)
+	var conn net.Conn
+	conn, err = net.DialTimeout(network, host, time.Duration(Config.Checks.Timeout)*time.Second)
 	rtt = int64(time.Since(start))
 	if err != nil {
 		switch err := err.(type) {

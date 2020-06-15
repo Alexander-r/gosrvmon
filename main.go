@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net"
@@ -182,6 +183,20 @@ func doSingleCheck(host string) (bool, time.Duration, error) {
 	return up, rttDuration, err
 }
 
+var ctx, ctxCancel = context.WithCancel(context.Background())
+var shutdownChan = make(chan struct{})
+
+func Wait(duration time.Duration) {
+	select {
+	case <-ctx.Done():
+		return
+	case <-shutdownChan:
+		return
+	case <-time.After(duration):
+		return
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -262,6 +277,8 @@ func main() {
 	go func() {
 		<-signalChannel
 		doProcess = false
+		close(shutdownChan)
+		ctxCancel()
 		wg.Wait()
 		err = server.Close()
 		if err != nil {
@@ -274,7 +291,7 @@ func main() {
 		t := time.Now()
 		n := t.Truncate(dt).Add(dt)
 		d := n.Sub(t)
-		time.Sleep(d)
+		Wait(d)
 		if Config.Checks.PerformChecks {
 			go checkTick(n.UTC())
 		}

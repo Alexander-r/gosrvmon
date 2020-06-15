@@ -92,7 +92,8 @@ func Ping(host string, isV4 bool) (rtt int64, up bool, err error) {
 	}
 
 	rsp := make([]byte, 65535)
-	n, err := c.Read(rsp)
+	var n int
+	n, err = c.Read(rsp)
 	rtt = int64(time.Since(start))
 	if err != nil {
 		switch err := err.(type) {
