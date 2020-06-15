@@ -10,7 +10,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/icmp
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/ipv4
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/ipv6
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /usr/bin/gosrvmon .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags purego -ldflags="-s -w" -o /usr/bin/gosrvmon .
 RUN cp config.json /etc/gosrvmon.json
 
 FROM scratch
