@@ -135,6 +135,7 @@ func doCheck(host string, checkTime time.Time) {
 	}
 
 	if err == nil {
+		go checkStateChange(host, rtt, checkTime, up)
 		err = saveCheck(host, checkTime, rtt, up)
 		if err != nil {
 			log.Printf("[ERROR] %v", err)
@@ -241,6 +242,8 @@ func main() {
 	http.HandleFunc(ChecksTemplateHandlerEndpoint, ChecksTemplateHandler)
 	http.HandleFunc(HostsViewTemplateHandlerEndpoint, HostsViewTemplateHandler)
 	http.HandleFunc(ChecksChartEndpoint, checksChart)
+	http.HandleFunc(StateChangeParamsHandlerEndpoint, StateChangeParamsTemplateHandler)
+	http.HandleFunc(JsonStateChangeParamsHandlerEndpoint, JsonStateChangeParamsHandler)
 	http.HandleFunc("/favicon.ico", func(res http.ResponseWriter, req *http.Request) {
 		res.Write([]byte{})
 	})

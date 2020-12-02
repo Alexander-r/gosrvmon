@@ -100,7 +100,24 @@ CREATE TABLE public.checks
 CREATE INDEX checks_check_time_idx
   ON public.checks
   USING brin
-  (host, check_time);`)
+  (host, check_time);
+
+CREATE TABLE public.state_change_params
+(
+  host text NOT NULL,
+  change_threshold bigint NOT NULL,
+  action text NOT NULL,
+  CONSTRAINT state_change_params_pkey PRIMARY KEY (host),
+  CONSTRAINT state_change_params_host_fkey FOREIGN KEY (host)
+      REFERENCES public.hosts (host) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+CREATE INDEX state_change_params_host_idx
+  ON public.state_change_params
+  USING brin
+  (host);
+`)
 	//case "ql": //NOTE: same as default
 	default:
 		_, err = tx.Exec(`
@@ -114,7 +131,14 @@ CREATE TABLE checks
   host string NOT NULL,
   check_time time NOT NULL,
   rtt int64 NOT NULL,
-  up bool NOT NULL,
+  up bool NOT NULL
+);
+
+CREATE TABLE state_change_params
+(
+  host string NOT NULL,
+  change_threshold int64 NOT NULL,
+  action string NOT NULL
 );
 `)
 	}
@@ -143,14 +167,15 @@ func getHostsList() (hosts []string, err error) {
 		return hosts, err
 	}
 	defer stmt.Close()
-	rows, err := stmt.Query()
+	var rows *sql.Rows
+	rows, err = stmt.Query()
 	if err != nil {
 		return hosts, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var tmpHost string
-		err := rows.Scan(&tmpHost)
+		err = rows.Scan(&tmpHost)
 		if err != nil {
 			return hosts, err
 		}
@@ -352,4 +377,167 @@ func getLastCheckData(host string) (cData ChecksData, err error) {
 		return cData, err
 	}
 	return cData, nil
+}
+
+func addHostStateChangeParams(newHost string, newThreshold int64, newAction string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	{
+		var stmt *sql.Stmt
+		stmt, err = tx.Prepare("DELETE FROM state_change_params WHERE host=$1;")
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		_, err = stmt.Exec(newHost)
+		if err != nil {
+			stmt.Close()
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		err = stmt.Close()
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+	}
+
+	{
+		var stmt *sql.Stmt
+		stmt, err = tx.Prepare("INSERT INTO state_change_params (host, change_threshold, action) VALUES ($1, $2, $3);")
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		_, err = stmt.Exec(newHost, newThreshold, newAction)
+		if err != nil {
+			stmt.Close()
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		err = stmt.Close()
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getHostStateChangeParams(host string) (p StateChangeParams, err error) {
+	var stmt *sql.Stmt
+	stmt, err = db.Prepare("SELECT host, change_threshold, action FROM state_change_params WHERE host = $1;")
+	if err != nil {
+		return p, err
+	}
+	defer stmt.Close()
+
+	row := stmt.QueryRow(host)
+	err = row.Scan(&p.Host, &p.ChangeThreshold, &p.Action)
+	if err != nil {
+		return p, err
+	}
+	return p, nil
+}
+
+func getHostStateChangeParamsList() (p []StateChangeParams, err error) {
+	p = make([]StateChangeParams, 0)
+	var stmt *sql.Stmt
+	stmt, err = db.Prepare("SELECT host, change_threshold, action FROM state_change_params;")
+	if err != nil {
+		return p, err
+	}
+	defer stmt.Close()
+	var rows *sql.Rows
+	rows, err = stmt.Query()
+	if err != nil {
+		return p, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var s StateChangeParams
+		err = rows.Scan(&s.Host, &s.ChangeThreshold, &s.Action)
+		if err != nil {
+			return p, err
+		}
+		p = append(p, s)
+	}
+	err = rows.Err()
+	if err != nil {
+		return p, err
+	}
+	return p, nil
+}
+
+func deleteHostStateChangeParams(newHost string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	var stmt *sql.Stmt
+	stmt, err = tx.Prepare("DELETE FROM state_change_params WHERE host=$1;")
+	if err != nil {
+		e := tx.Rollback()
+		if e != nil {
+			return e
+		}
+		return err
+	}
+
+	_, err = stmt.Exec(newHost)
+	if err != nil {
+		stmt.Close()
+		e := tx.Rollback()
+		if e != nil {
+			return e
+		}
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		e := tx.Rollback()
+		if e != nil {
+			return e
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

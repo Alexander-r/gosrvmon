@@ -20,12 +20,7 @@ func GetCheckRequest(w http.ResponseWriter, r *http.Request) (chkHost string, er
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
-
-		err = json.Unmarshal(body, &chkHost)
-		if err != nil {
-			http.Error(w, "Bad request", http.StatusBadRequest)
-			return
-		}
+		chkHost = string(body)
 
 	default:
 		err = errors.New("Method not allowed")

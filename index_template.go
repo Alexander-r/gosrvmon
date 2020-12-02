@@ -40,6 +40,7 @@ const indexTemplateDoc string = `<!DOCTYPE html>
 <ul>
   <li><a href="` + HostsTemplateHandlerEndpoint + `">` + HostsTemplateHandlerEndpoint + `</a></li>
   <li><a href="` + ChecksTemplateHandlerEndpoint + `">` + ChecksTemplateHandlerEndpoint + `</a></li>
+  <li><a href="` + StateChangeParamsHandlerEndpoint + `">` + StateChangeParamsHandlerEndpoint + `</a></li>
   <li><a href="` + HostsViewTemplateHandlerEndpoint + `">` + HostsViewTemplateHandlerEndpoint + `</a></li>
 </ul>
 
@@ -48,6 +49,7 @@ const indexTemplateDoc string = `<!DOCTYPE html>
   <li><a href="` + JsonHostsHandlerEndpoint + `">` + JsonHostsHandlerEndpoint + `</a></li>
   <li><a href="` + JsonChecksHandlerEndpoint + `">` + JsonChecksHandlerEndpoint + `</a></li>
   <li><a href="` + JsonChecksLastHandlerEndpoint + `">` + JsonChecksLastHandlerEndpoint + `</a></li>
+  <li><a href="` + JsonStateChangeParamsHandlerEndpoint + `">` + JsonStateChangeParamsHandlerEndpoint + `</a></li>
 {{if .AllowSingleChecks}}
   <li><a href="` + JsonCheckHandlerEndpoint + `">` + JsonCheckHandlerEndpoint + `</a></li>
 {{end}}

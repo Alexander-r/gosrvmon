@@ -147,12 +147,7 @@ func JsonHostsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
-		var newHost string
-		err = json.Unmarshal(body, &newHost)
-		if err != nil {
-			http.Error(w, "Bad request", http.StatusBadRequest)
-			return
-		}
+		var newHost string = string(body)
 
 		err = AddHost(newHost)
 		if err != nil {
@@ -162,6 +157,7 @@ func JsonHostsHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusCreated)
 		return
+
 	case http.MethodDelete:
 		if Config.Listen.WebAuth.Enable {
 			username, password, authOK := r.BasicAuth()
@@ -184,12 +180,7 @@ func JsonHostsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
-		var newHost string
-		err = json.Unmarshal(body, &newHost)
-		if err != nil {
-			http.Error(w, "Bad request", http.StatusBadRequest)
-			return
-		}
+		var newHost string = string(body)
 
 		err = DeleteHost(newHost)
 		if err != nil {
@@ -199,6 +190,7 @@ func JsonHostsHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
 		return
+
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
