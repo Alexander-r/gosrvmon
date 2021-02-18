@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-const JsonStateChangeParamsHandlerEndpoint string = "/api/state_change_params"
+const JsonStateChangeParamsHandlerEndpoint string = "/api/notifications_params"
 
 func JsonStateChangeParamsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {

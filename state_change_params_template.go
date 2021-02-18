@@ -73,7 +73,7 @@ type StateChangeParamsPageData struct {
 
 var stateChangeParamsTemplate = template.Must(template.New("State Change Params Template").Parse(stateChangeParamsTemplateDoc))
 
-const StateChangeParamsHandlerEndpoint string = "/web/state_change_params"
+const StateChangeParamsHandlerEndpoint string = "/web/notifications_params"
 
 func StateChangeParamsTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
