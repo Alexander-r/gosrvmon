@@ -50,7 +50,7 @@ func ChecksTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data []ChecksData
-	data, err = getChecksData(chkReq)
+	data, err = MonData.GetChecksData(chkReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -106,7 +106,7 @@ func checksChart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data []ChecksData
-	data, err = getChecksData(chkReq)
+	data, err = MonData.GetChecksData(chkReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

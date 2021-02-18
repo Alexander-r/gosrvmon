@@ -22,7 +22,7 @@ var CheckStates map[string]StateChangeData = make(map[string]StateChangeData)
 var CheckStatesMux sync.RWMutex
 
 func checkStateChange(host string, rtt int64, checkTime time.Time, up bool) {
-	checkParams, err := getHostStateChangeParams(host)
+	checkParams, err := MonData.GetHostStateChangeParams(host)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("[ERROR] %v", err)

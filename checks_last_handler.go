@@ -17,7 +17,7 @@ func JsonChecksLastHandler(w http.ResponseWriter, r *http.Request) {
 
 	var cData ChecksData
 
-	cData, err = getLastCheckData(chkHost)
+	cData, err = MonData.GetLastCheckData(chkHost)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

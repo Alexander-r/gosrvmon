@@ -17,6 +17,8 @@ import (
 	"time"
 )
 
+var MonData MonDB
+
 type CheckType int32
 
 const (
@@ -136,7 +138,7 @@ func doCheck(host string, checkTime time.Time) {
 
 	if err == nil {
 		go checkStateChange(host, rtt, checkTime, up)
-		err = saveCheck(host, checkTime, rtt, up)
+		err = MonData.SaveCheck(host, checkTime, rtt, up)
 		if err != nil {
 			log.Printf("[ERROR] %v", err)
 		}
@@ -150,7 +152,7 @@ func checkTick(t time.Time) {
 	if !doProcess {
 		return
 	}
-	hosts, err := getHostsList()
+	hosts, err := MonData.GetHostsList()
 	if err != nil {
 		log.Printf("[ERROR] %v", err)
 		return
@@ -217,15 +219,24 @@ func main() {
 		return
 	}
 
-	err = dBConnect()
+	switch Config.DB.Type {
+	case "pq":
+		MonData = &MonDBPQ{}
+	case "ql":
+		MonData = &MonDBQL{}
+	default:
+		MonData = &MonDBQL{}
+	}
+
+	err = MonData.Open(Config)
 	if err != nil {
 		log.Printf("[ERROR] %v", err)
 		return
 	}
-	defer dBClose()
+	defer MonData.Close()
 
 	if *initDB {
-		err = dBInit()
+		err = MonData.Init()
 		if err != nil {
 			log.Printf("[ERROR] %v", err)
 			return

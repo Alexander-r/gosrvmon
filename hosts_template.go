@@ -137,7 +137,7 @@ func HostsTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var hostsList []string
-	hostsList, err = getHostsList()
+	hostsList, err = MonData.GetHostsList()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

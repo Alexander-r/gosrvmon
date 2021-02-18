@@ -94,7 +94,7 @@ func GetChecksRequest(w http.ResponseWriter, r *http.Request) (chkReq ChecksRequ
 		return
 	}
 
-	err = checkHostExists(chkReq.Host)
+	err = MonData.CheckHostExists(chkReq.Host)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Unknown host", http.StatusBadRequest)
@@ -118,7 +118,7 @@ func JsonChecksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var cData []ChecksData
-	cData, err = getChecksData(chkReq)
+	cData, err = MonData.GetChecksData(chkReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

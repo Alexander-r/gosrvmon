@@ -11,7 +11,7 @@ const JsonStateChangeParamsHandlerEndpoint string = "/api/notifications_params"
 func JsonStateChangeParamsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		p, err := getHostStateChangeParamsList()
+		p, err := MonData.GetHostStateChangeParamsList()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -60,7 +60,7 @@ func JsonStateChangeParamsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = addHostStateChangeParams(newParams.Host, newParams.ChangeThreshold, newParams.Action)
+		err = MonData.AddHostStateChangeParams(newParams.Host, newParams.ChangeThreshold, newParams.Action)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -93,7 +93,7 @@ func JsonStateChangeParamsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		var newHost string = string(body)
 
-		err = deleteHostStateChangeParams(newHost)
+		err = MonData.DeleteHostStateChangeParams(newHost)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

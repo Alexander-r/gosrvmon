@@ -143,7 +143,7 @@ func StateChangeParamsTemplateHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Bad request", http.StatusBadRequest)
 				return
 			}
-			err = addHostStateChangeParams(newHost, checkThreshold, newAction)
+			err = MonData.AddHostStateChangeParams(newHost, checkThreshold, newAction)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
@@ -152,7 +152,7 @@ func StateChangeParamsTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if action == "del" {
-			err := deleteHostStateChangeParams(newHost)
+			err := MonData.DeleteHostStateChangeParams(newHost)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
@@ -162,7 +162,7 @@ func StateChangeParamsTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var p []StateChangeParams
-	p, err = getHostStateChangeParamsList()
+	p, err = MonData.GetHostStateChangeParamsList()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

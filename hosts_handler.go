@@ -13,14 +13,14 @@ func AddHost(newHost string) error {
 		return errors.New("Host not acceptable")
 	}
 	var err error
-	err = checkHostExists(newHost)
+	err = MonData.CheckHostExists(newHost)
 	if err != sql.ErrNoRows {
 		if err == nil {
 			return errors.New("Bad request")
 		}
 		return err
 	}
-	err = addHost(newHost)
+	err = MonData.AddHost(newHost)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func DeleteHost(newHost string) error {
 		return errors.New("Host not acceptable")
 	}
 	var err error
-	err = checkHostExists(newHost)
+	err = MonData.CheckHostExists(newHost)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errors.New("Host not in DB")
@@ -40,7 +40,7 @@ func DeleteHost(newHost string) error {
 			return err
 		}
 	}
-	err = deleteHost(newHost)
+	err = MonData.DeleteHost(newHost)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func JsonHostsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		action := r.URL.Query().Get("action")
 		if len(action) == 0 {
-			hosts, err := getHostsList()
+			hosts, err := MonData.GetHostsList()
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
