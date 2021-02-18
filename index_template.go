@@ -39,6 +39,7 @@ const indexTemplateDoc string = `<!DOCTYPE html>
 <h2>Web Endpoints</h2>
 <ul>
   <li><a href="` + HostsTemplateHandlerEndpoint + `">` + HostsTemplateHandlerEndpoint + `</a></li>
+  <li><a href="` + StateChangeParamsHandlerEndpoint + `">` + StateChangeParamsHandlerEndpoint + `</a></li>
   <li><a href="` + ChecksTemplateHandlerEndpoint + `">` + ChecksTemplateHandlerEndpoint + `</a></li>
   <li><a href="` + StateChangeParamsHandlerEndpoint + `">` + StateChangeParamsHandlerEndpoint + `</a></li>
   <li><a href="` + HostsViewTemplateHandlerEndpoint + `">` + HostsViewTemplateHandlerEndpoint + `</a></li>
@@ -47,6 +48,7 @@ const indexTemplateDoc string = `<!DOCTYPE html>
 <h2>API Endpoints</h2>
 <ul>
   <li><a href="` + JsonHostsHandlerEndpoint + `">` + JsonHostsHandlerEndpoint + `</a></li>
+  <li><a href="` + JsonStateChangeParamsHandlerEndpoint + `">` + JsonStateChangeParamsHandlerEndpoint + `</a></li>
   <li><a href="` + JsonChecksHandlerEndpoint + `">` + JsonChecksHandlerEndpoint + `</a></li>
   <li><a href="` + JsonChecksLastHandlerEndpoint + `">` + JsonChecksLastHandlerEndpoint + `</a></li>
   <li><a href="` + JsonStateChangeParamsHandlerEndpoint + `">` + JsonStateChangeParamsHandlerEndpoint + `</a></li>
