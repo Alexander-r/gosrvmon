@@ -64,4 +64,7 @@ func loadConfiguration(configPath string) {
 	if Config.Chart.MaxRttScale <= 0 {
 		Config.Chart.MaxRttScale = 200
 	}
+	if Config.DB.Type == "pg" {
+		Config.DB.Type = "pq"
+	}
 }
