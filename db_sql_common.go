@@ -128,6 +128,9 @@ func CheckHostExistsCommon(db *sql.DB, newHost string) error {
 	var tmpHost string
 	err = row.Scan(&tmpHost)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrNoHostInDB
+		}
 		return err
 	}
 	return nil
@@ -312,6 +315,9 @@ func GetHostStateChangeParamsCommon(db *sql.DB, host string) (p StateChangeParam
 	row := stmt.QueryRow(host)
 	err = row.Scan(&p.Host, &p.ChangeThreshold, &p.Action)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrNoHostInDB
+		}
 		return p, err
 	}
 	return p, nil

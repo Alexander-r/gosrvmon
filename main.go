@@ -40,27 +40,6 @@ var doProcess bool = true
 
 var hostnameRegex = regexp.MustCompile(`^[[:alnum:]][[:alnum:]\-]{0,61}[[:alnum:]]|[[:alpha:]]$`)
 
-func int64ToBytes(v int64) (bytes []byte) {
-	var b byte = 0
-	b = byte(v & 0xFF)
-	bytes = append(bytes, b)
-	b = byte(v >> 8 & 0xFF)
-	bytes = append(bytes, b)
-	b = byte(v >> 16 & 0xFF)
-	bytes = append(bytes, b)
-	b = byte(v >> 24 & 0xFF)
-	bytes = append(bytes, b)
-	b = byte(v >> 32 & 0xFF)
-	bytes = append(bytes, b)
-	b = byte(v >> 40 & 0xFF)
-	bytes = append(bytes, b)
-	b = byte(v >> 48 & 0xFF)
-	bytes = append(bytes, b)
-	b = byte(v >> 56 & 0xFF)
-	bytes = append(bytes, b)
-	return bytes
-}
-
 func isHostOrIP(host string) bool {
 	if len(host) > 256 {
 		return false
@@ -91,16 +70,6 @@ func getCheckType(host string) CheckType {
 		h = strings.Split(host[1:], "]:")
 	} else {
 		h = strings.Split(host, ":")
-	}
-	if len(h) == 2 {
-		if isHostOrIP(h[0]) {
-			if i, err := strconv.ParseInt(h[1], 10, 32); err == nil {
-				if i > 0 && i <= 65536 {
-					return checkTcp
-				}
-			}
-		}
-		return checkInvalid
 	}
 	if len(h) == 2 {
 		if isHostOrIP(h[0]) {
@@ -201,7 +170,10 @@ func Wait(duration time.Duration) {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
+
+	CheckByteOrder()
 
 	loadConfiguration(*configPath)
 
@@ -220,6 +192,10 @@ func main() {
 	}
 
 	switch Config.DB.Type {
+	case "bolt":
+		MonData = &MonDBBolt{}
+	case "bbolt":
+		MonData = &MonDBBolt{}
 	case "pq":
 		MonData = &MonDBPQ{}
 	case "ql":

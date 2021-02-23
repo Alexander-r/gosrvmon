@@ -58,8 +58,8 @@ func Ping(host string, isV4 bool) (rtt int64, up bool, err error) {
 	start := time.Now()
 	sec := int64(start.Unix())
 	usec := int64((start.UnixNano() / 1000 % 1000))
-	xdata := int64ToBytes(sec)
-	xdata = append(xdata, int64ToBytes(usec)...)
+	xdata := I64ToB(sec)
+	xdata = append(xdata, I64ToB(usec)...)
 	//xdata = []byte("ping")
 
 	var rq []byte

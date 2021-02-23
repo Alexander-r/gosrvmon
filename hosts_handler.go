@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -14,7 +13,7 @@ func AddHost(newHost string) error {
 	}
 	var err error
 	err = MonData.CheckHostExists(newHost)
-	if err != sql.ErrNoRows {
+	if err != ErrNoHostInDB {
 		if err == nil {
 			return errors.New("Bad request")
 		}
@@ -34,11 +33,7 @@ func DeleteHost(newHost string) error {
 	var err error
 	err = MonData.CheckHostExists(newHost)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return errors.New("Host not in DB")
-		} else {
-			return err
-		}
+		return err
 	}
 	err = MonData.DeleteHost(newHost)
 	if err != nil {

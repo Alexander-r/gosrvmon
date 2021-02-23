@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type MonDB interface {
 	Open(cfg Configuration) error
@@ -18,3 +21,5 @@ type MonDB interface {
 	GetHostStateChangeParamsList() (p []StateChangeParams, err error)
 	DeleteHostStateChangeParams(newHost string) error
 }
+
+var ErrNoHostInDB = errors.New("no such host in db")

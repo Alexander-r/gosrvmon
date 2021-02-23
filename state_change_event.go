@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"sync"
 	"time"
@@ -24,7 +23,7 @@ var CheckStatesMux sync.RWMutex
 func checkStateChange(host string, rtt int64, checkTime time.Time, up bool) {
 	checkParams, err := MonData.GetHostStateChangeParams(host)
 	if err != nil {
-		if err != sql.ErrNoRows {
+		if err != ErrNoHostInDB {
 			log.Printf("[ERROR] %v", err)
 		}
 		return
@@ -44,7 +43,7 @@ func checkStateChange(host string, rtt int64, checkTime time.Time, up bool) {
 		CheckStatesMux.Unlock()
 		return
 	}
-	if int64(checkTime.Sub(checkState.LastTimeObserved).Seconds()) > checkParams.ChangeThreshold {
+	if checkTime.Sub(checkState.LastTimeObserved).Milliseconds()/1000 > checkParams.ChangeThreshold {
 		CheckStatesMux.Lock()
 		CheckStates[host] = StateChangeData{checkTime, up}
 		CheckStatesMux.Unlock()

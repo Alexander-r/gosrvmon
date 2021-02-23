@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -96,13 +95,8 @@ func GetChecksRequest(w http.ResponseWriter, r *http.Request) (chkReq ChecksRequ
 
 	err = MonData.CheckHostExists(chkReq.Host)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "Unknown host", http.StatusBadRequest)
-			return
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	return
 }

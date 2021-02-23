@@ -15,14 +15,14 @@ func (d *MonDBQL) Open(cfg Configuration) error {
 	var err error
 
 	var performInit bool = false
-	if Config.DB.Database == "" || Config.DB.Type == "" {
+	if cfg.DB.Database == "" || cfg.DB.Type == "" {
 		performInit = true
 		d.db, err = sql.Open("ql-mem", "gosrvmon.db")
 	} else {
-		if _, err = os.Stat(Config.DB.Database); os.IsNotExist(err) {
+		if _, err = os.Stat(cfg.DB.Database); os.IsNotExist(err) {
 			performInit = true
 		}
-		d.db, err = sql.Open("ql2", Config.DB.Database)
+		d.db, err = sql.Open("ql2", cfg.DB.Database)
 	}
 
 	if err != nil {
@@ -71,7 +71,7 @@ CREATE TABLE checks
 CREATE TABLE state_change_params
 (
   host string NOT NULL,
-  change_threshold int64 NOT NULL,
+  change_threshold int32 NOT NULL,
   action string NOT NULL
 );
 `)
