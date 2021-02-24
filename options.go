@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"os"
+	"strings"
 )
 
 type Configuration struct {
@@ -35,6 +35,7 @@ type Configuration struct {
 		UseRemoteChecks   bool
 		RemoteChecksURLs  []string
 		AllowSingleChecks bool
+		Retention         int64
 	}
 	Chart struct {
 		MaxRttScale     int64
@@ -44,22 +45,52 @@ type Configuration struct {
 
 var Config = Configuration{}
 
-func loadConfiguration(configPath string) {
-	file, err := os.Open(configPath)
-	if err != nil {
-		log.Printf("[ERROR] %v", err)
-		return
-	}
-	defer file.Close()
-	decoder := json.NewDecoder(file)
+func loadConfiguration() error {
+	Config.Checks.PerformChecks = true
 
-	err = decoder.Decode(&Config)
-	if err != nil {
-		log.Printf("[ERROR] %v", err)
-		return
+	if *configPath != "" {
+		file, err := os.Open(*configPath)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		decoder := json.NewDecoder(file)
+
+		err = decoder.Decode(&Config)
+		if err != nil {
+			return err
+		}
+	}
+	if *configStr != "" {
+		cfgBuf := strings.NewReader(*configStr)
+		decoder := json.NewDecoder(cfgBuf)
+
+		err := decoder.Decode(&Config)
+		if err != nil {
+			return err
+		}
+	}
+
+	if Config.Listen.Port == "" {
+		Config.Listen.Port = "8000"
+	}
+	if Config.Listen.ReadTimeout == 0 {
+		Config.Listen.ReadTimeout = 30
+	}
+	if Config.Listen.WriteTimeout == 0 {
+		Config.Listen.WriteTimeout = 60
+	}
+	if Config.Checks.Timeout == 0 {
+		Config.Checks.Timeout = 10
+	}
+	if Config.Checks.Interval == 0 {
+		Config.Checks.Interval = 60
 	}
 	if Config.Checks.PingRetryCount < 1 {
 		Config.Checks.PingRetryCount = 1
+	}
+	if Config.Checks.HTTPMethod == "" {
+		Config.Checks.HTTPMethod = "GET"
 	}
 	if Config.Chart.MaxRttScale <= 0 {
 		Config.Chart.MaxRttScale = 200
@@ -67,4 +98,11 @@ func loadConfiguration(configPath string) {
 	if Config.DB.Type == "pg" {
 		Config.DB.Type = "pq"
 	}
+	if Config.DB.Type == "bbolt" {
+		Config.DB.Type = "bolt"
+	}
+	if Config.DB.Database == "" {
+		Config.DB.Type = "ql"
+	}
+	return nil
 }

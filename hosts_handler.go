@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+var ErrHostInDB = errors.New("host already exists in DB")
+
 func AddHost(newHost string) error {
 	if getCheckType(newHost) == checkInvalid {
 		return errors.New("Host not acceptable")
@@ -15,7 +17,7 @@ func AddHost(newHost string) error {
 	err = MonData.CheckHostExists(newHost)
 	if err != ErrNoHostInDB {
 		if err == nil {
-			return errors.New("Bad request")
+			return ErrHostInDB
 		}
 		return err
 	}

@@ -1,11 +1,11 @@
 {
   "DB": {
-    "Type": "",
+    "Type": "bolt",
     "Host": "",
     "Port": "5432",
     "User": "",
     "Password": "",
-    "Database":  "gosrvmon.db"
+    "Database": "gosrvmon.db"
   },
   "Listen": {
     "Address": "",
@@ -24,9 +24,10 @@
     "PingRetryCount": 4,
     "HTTPMethod": "HEAD",
     "PerformChecks": true,
-    "UseRemoteChecks": true,
+    "UseRemoteChecks": false,
     "RemoteChecksURLs": [ ],
-    "AllowSingleChecks": true
+    "AllowSingleChecks": false,
+    "Retention": 0
   },
   "Chart": {
     "MaxRttScale": 200,

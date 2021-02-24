@@ -9,6 +9,23 @@ import (
 const JsonStateChangeParamsHandlerEndpoint string = "/api/notifications_params"
 
 func JsonStateChangeParamsHandler(w http.ResponseWriter, r *http.Request) {
+	if Config.Listen.WebAuth.Enable {
+		username, password, authOK := r.BasicAuth()
+		if authOK == false {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("401 - Not authorized"))
+			return
+		}
+
+		if username != Config.Listen.WebAuth.User || password != Config.Listen.WebAuth.Password {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("401 - Not authorized"))
+			return
+		}
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		p, err := MonData.GetHostStateChangeParamsList()
@@ -32,22 +49,6 @@ func JsonStateChangeParamsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	case http.MethodPost:
-		if Config.Listen.WebAuth.Enable {
-			username, password, authOK := r.BasicAuth()
-			if authOK == false {
-				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("401 - Not authorized"))
-				return
-			}
-
-			if username != Config.Listen.WebAuth.User || password != Config.Listen.WebAuth.Password {
-				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("401 - Not authorized"))
-				return
-			}
-		}
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Bad request", http.StatusBadRequest)
@@ -70,22 +71,6 @@ func JsonStateChangeParamsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	case http.MethodDelete:
-		if Config.Listen.WebAuth.Enable {
-			username, password, authOK := r.BasicAuth()
-			if authOK == false {
-				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("401 - Not authorized"))
-				return
-			}
-
-			if username != Config.Listen.WebAuth.User || password != Config.Listen.WebAuth.Password {
-				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("401 - Not authorized"))
-				return
-			}
-		}
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Bad request", http.StatusBadRequest)

@@ -29,7 +29,8 @@ const (
 )
 
 var (
-	configPath = flag.String("config", "config.json", "Config path")
+	configPath = flag.String("config", "", "Config path")
+	configStr  = flag.String("confstr", "", "Pass config as a string")
 	checkHost  = flag.String("check", "", "Check single host")
 	initDB     = flag.Bool("init", false, "Init DB")
 )
@@ -103,15 +104,15 @@ func doCheck(host string, checkTime time.Time) {
 		rtt, up, err = TcpCheck(host)
 	default:
 		log.Println("[ERROR] Unknown checkType")
+		return
 	}
 
-	if err == nil {
-		go checkStateChange(host, rtt, checkTime, up)
-		err = MonData.SaveCheck(host, checkTime, rtt, up)
-		if err != nil {
-			log.Printf("[ERROR] %v", err)
-		}
-	} else {
+	if err != nil {
+		up = false
+	}
+	go checkStateChange(host, rtt, checkTime, up)
+	err = MonData.SaveCheck(host, checkTime, rtt, up)
+	if err != nil {
 		log.Printf("[ERROR] %v", err)
 	}
 	wg.Done()
@@ -175,9 +176,13 @@ func main() {
 
 	CheckByteOrder()
 
-	loadConfiguration(*configPath)
-
 	var err error
+
+	err = loadConfiguration()
+	if err != nil {
+		log.Printf("[ERROR] %v", err)
+		return
+	}
 
 	if len(*checkHost) > 0 {
 		var up bool
@@ -194,14 +199,12 @@ func main() {
 	switch Config.DB.Type {
 	case "bolt":
 		MonData = &MonDBBolt{}
-	case "bbolt":
-		MonData = &MonDBBolt{}
 	case "pq":
 		MonData = &MonDBPQ{}
 	case "ql":
 		MonData = &MonDBQL{}
 	default:
-		MonData = &MonDBQL{}
+		MonData = &MonDBBolt{}
 	}
 
 	err = MonData.Open(Config)
@@ -231,6 +234,8 @@ func main() {
 	http.HandleFunc(ChecksChartEndpoint, checksChart)
 	http.HandleFunc(StateChangeParamsHandlerEndpoint, StateChangeParamsTemplateHandler)
 	http.HandleFunc(JsonStateChangeParamsHandlerEndpoint, JsonStateChangeParamsHandler)
+	http.HandleFunc(JsonBackupHandlerEndpoint, JsonBackupHandler)
+	http.HandleFunc(JsonBackupFullHandlerEndpoint, JsonBackupFullHandler)
 	http.HandleFunc("/favicon.ico", func(res http.ResponseWriter, req *http.Request) {
 		res.Write([]byte{})
 	})
@@ -253,10 +258,10 @@ func main() {
 		WriteTimeout: time.Duration(Config.Listen.WriteTimeout) * time.Second,
 	}
 	go func() {
-		err = server.ListenAndServe()
-		if err != nil {
-			if err != http.ErrServerClosed {
-				log.Printf("[ERROR] %v", err)
+		e := server.ListenAndServe()
+		if e != nil {
+			if e != http.ErrServerClosed {
+				log.Printf("[ERROR] %v", e)
 			}
 			doProcess = false
 		}
@@ -270,15 +275,24 @@ func main() {
 		close(shutdownChan)
 		ctxCancel()
 		wg.Wait()
-		err = server.Close()
-		if err != nil {
-			log.Printf("[ERROR] %v", err)
+		e := server.Close()
+		if e != nil {
+			log.Printf("[ERROR] %v", e)
 		}
 	}()
 
 	dt := time.Duration(Config.Checks.Interval) * time.Second
+	retentiont := time.Duration(-Config.Checks.Retention) * time.Second
 	for doProcess {
 		t := time.Now()
+		if Config.Checks.Retention != 0 {
+			go func() {
+				e := MonData.DeleteOldChecks(t.Truncate(dt).Add(retentiont))
+				if e != nil {
+					log.Printf("[ERROR] %v", e)
+				}
+			}()
+		}
 		n := t.Truncate(dt).Add(dt)
 		d := n.Sub(t)
 		Wait(d)

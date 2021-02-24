@@ -48,6 +48,8 @@ const indexTemplateDoc string = `<!DOCTYPE html>
 <ul>
   <li><a href="` + JsonHostsHandlerEndpoint + `">` + JsonHostsHandlerEndpoint + `</a></li>
   <li><a href="` + JsonStateChangeParamsHandlerEndpoint + `">` + JsonStateChangeParamsHandlerEndpoint + `</a></li>
+  <li><a href="` + JsonBackupHandlerEndpoint + `">` + JsonBackupHandlerEndpoint + `</a></li>
+  <li><a href="` + JsonBackupFullHandlerEndpoint + `">` + JsonBackupFullHandlerEndpoint + `</a></li>
   <li><a href="` + JsonChecksHandlerEndpoint + `">` + JsonChecksHandlerEndpoint + `</a></li>
   <li><a href="` + JsonChecksLastHandlerEndpoint + `">` + JsonChecksLastHandlerEndpoint + `</a></li>
 {{if .AllowSingleChecks}}

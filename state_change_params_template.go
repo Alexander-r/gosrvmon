@@ -76,6 +76,23 @@ var stateChangeParamsTemplate = template.Must(template.New("State Change Params 
 const StateChangeParamsHandlerEndpoint string = "/web/notifications_params"
 
 func StateChangeParamsTemplateHandler(w http.ResponseWriter, r *http.Request) {
+	if Config.Listen.WebAuth.Enable {
+		username, password, authOK := r.BasicAuth()
+		if authOK == false {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("401 - Not authorized"))
+			return
+		}
+
+		if username != Config.Listen.WebAuth.User || password != Config.Listen.WebAuth.Password {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("401 - Not authorized"))
+			return
+		}
+	}
+
 	var err error
 
 	data := StateChangeParamsPageData{
@@ -102,23 +119,6 @@ func StateChangeParamsTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		if Config.Listen.WebAuth.Enable {
-			username, password, authOK := r.BasicAuth()
-			if authOK == false {
-				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("401 - Not authorized"))
-				return
-			}
-
-			if username != Config.Listen.WebAuth.User || password != Config.Listen.WebAuth.Password {
-				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("401 - Not authorized"))
-				return
-			}
-		}
-
 		action := r.PostFormValue("action")
 		newHost := r.PostFormValue("host")
 		newThreshold := r.PostFormValue("threshold")

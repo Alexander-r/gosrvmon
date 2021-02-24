@@ -62,16 +62,18 @@ CREATE TABLE hosts
 
 CREATE TABLE checks
 (
-  host string NOT NULL,
+  host int64 NOT NULL,
   check_time time NOT NULL,
   rtt int64 NOT NULL,
   up bool NOT NULL
 );
 
-CREATE TABLE state_change_params
+CREATE INDEX checks_idx ON checks (host);
+
+CREATE TABLE notifications_params
 (
-  host string NOT NULL,
-  change_threshold int32 NOT NULL,
+  host int64 NOT NULL,
+  change_threshold int64 NOT NULL,
   action string NOT NULL
 );
 `)
@@ -101,7 +103,110 @@ func (d *MonDBQL) AddHost(newHost string) error {
 }
 
 func (d *MonDBQL) DeleteHost(newHost string) error {
-	return DeleteHostCommon(d.db, newHost)
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	{
+		var stmt *sql.Stmt
+		stmt, err = tx.Prepare("DELETE FROM notifications_params WHERE host IN (SELECT id() FROM hosts WHERE host = $1 LIMIT 1);")
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		_, err = stmt.Exec(newHost)
+		if err != nil {
+			stmt.Close()
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		err = stmt.Close()
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+	}
+
+	{
+		var stmt *sql.Stmt
+		stmt, err = tx.Prepare("DELETE FROM checks WHERE host IN (SELECT id() FROM hosts WHERE host = $1 LIMIT 1);")
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		_, err = stmt.Exec(newHost)
+		if err != nil {
+			stmt.Close()
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		err = stmt.Close()
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+	}
+
+	{
+		var stmt *sql.Stmt
+		stmt, err = tx.Prepare("DELETE FROM hosts WHERE host=$1;")
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		_, err = stmt.Exec(newHost)
+		if err != nil {
+			stmt.Close()
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		err = stmt.Close()
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *MonDBQL) CheckHostExists(newHost string) error {
@@ -109,29 +214,264 @@ func (d *MonDBQL) CheckHostExists(newHost string) error {
 }
 
 func (d *MonDBQL) SaveCheck(host string, checkTime time.Time, rtt int64, up bool) error {
-	return SaveCheckCommon(d.db, host, checkTime, rtt, up)
+	var err error
+
+	var tx *sql.Tx
+	tx, err = d.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	var stmt *sql.Stmt
+	stmt, err = tx.Prepare("INSERT INTO checks (host, check_time, rtt, up) SELECT id(), $2, $3, $4 FROM hosts WHERE host = $1 LIMIT 1;")
+	if err != nil {
+		e := tx.Rollback()
+		if e != nil {
+			return e
+		}
+		return err
+	}
+
+	_, err = stmt.Exec(host, checkTime, rtt, up)
+	if err != nil {
+		stmt.Close()
+		e := tx.Rollback()
+		if e != nil {
+			return e
+		}
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		e := tx.Rollback()
+		if e != nil {
+			return e
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *MonDBQL) GetChecksData(chkReq ChecksRequest) (cData []ChecksData, err error) {
-	return GetChecksDataCommon(d.db, chkReq)
+	cData = make([]ChecksData, 0)
+	var stmt *sql.Stmt
+	stmt, err = d.db.Prepare("SELECT check_time, rtt, up FROM checks WHERE host IN (SELECT id() FROM hosts WHERE host = $1 LIMIT 1) AND check_time >= $2 AND check_time <= $3;")
+	if err != nil {
+		return cData, err
+	}
+	defer stmt.Close()
+
+	var rows *sql.Rows
+	rows, err = stmt.Query(chkReq.Host, chkReq.Start, chkReq.End)
+	if err != nil {
+		return cData, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var tmpDat ChecksData
+		err := rows.Scan(&tmpDat.Timestamp, &tmpDat.Rtt, &tmpDat.Up)
+		if err != nil {
+			return cData, err
+		}
+		cData = append(cData, tmpDat)
+	}
+	err = rows.Err()
+	if err != nil {
+		return cData, err
+	}
+	return cData, nil
 }
 
 func (d *MonDBQL) GetLastCheckData(host string) (cData ChecksData, err error) {
-	return GetLastCheckDataCommon(d.db, host)
+	var stmt *sql.Stmt
+	stmt, err = d.db.Prepare("SELECT check_time, rtt, up FROM checks WHERE host IN (SELECT id() FROM hosts WHERE host = $1 LIMIT 1) ORDER BY check_time DESC LIMIT 1;")
+	if err != nil {
+		return cData, err
+	}
+	defer stmt.Close()
+
+	row := stmt.QueryRow(host)
+	err = row.Scan(&cData.Timestamp, &cData.Rtt, &cData.Up)
+	if err != nil {
+		return cData, err
+	}
+	return cData, nil
+}
+
+func (d *MonDBQL) DeleteOldChecks(beforeTime time.Time) error {
+	return DeleteOldChecksCommon(d.db, beforeTime)
 }
 
 func (d *MonDBQL) AddHostStateChangeParams(newHost string, newThreshold int64, newAction string) error {
-	return AddHostStateChangeParamsCommon(d.db, newHost, newThreshold, newAction)
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	{
+		var stmt *sql.Stmt
+		stmt, err = tx.Prepare("DELETE FROM notifications_params WHERE host IN (SELECT id() FROM hosts WHERE host = $1 LIMIT 1);")
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		_, err = stmt.Exec(newHost)
+		if err != nil {
+			stmt.Close()
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		err = stmt.Close()
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+	}
+
+	{
+		var stmt *sql.Stmt
+		stmt, err = tx.Prepare("INSERT INTO notifications_params (host, change_threshold, action) SELECT id(), $2, $3 FROM hosts WHERE host = $1 LIMIT 1;")
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		_, err = stmt.Exec(newHost, newThreshold, newAction)
+		if err != nil {
+			stmt.Close()
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+
+		err = stmt.Close()
+		if err != nil {
+			e := tx.Rollback()
+			if e != nil {
+				return e
+			}
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *MonDBQL) GetHostStateChangeParams(host string) (p StateChangeParams, err error) {
-	return GetHostStateChangeParamsCommon(d.db, host)
+	var stmt *sql.Stmt
+	stmt, err = d.db.Prepare("SELECT change_threshold, action FROM notifications_params WHERE host IN (SELECT id() FROM hosts WHERE host = $1 LIMIT 1);")
+	if err != nil {
+		return p, err
+	}
+	defer stmt.Close()
+
+	row := stmt.QueryRow(host)
+	err = row.Scan(&p.ChangeThreshold, &p.Action)
+	p.Host = host
+	if err != nil {
+		if err == sql.ErrNoRows {
+			err = ErrNoHostInDB
+		}
+		return p, err
+	}
+	return p, nil
 }
 
 func (d *MonDBQL) GetHostStateChangeParamsList() (p []StateChangeParams, err error) {
-	return GetHostStateChangeParamsListCommon(d.db)
+	p = make([]StateChangeParams, 0)
+	var stmt *sql.Stmt
+	stmt, err = d.db.Prepare("SELECT hosts.host, notifications_params.change_threshold, notifications_params.action FROM hosts, notifications_params WHERE id(hosts) = notifications_params.host;")
+	if err != nil {
+		return p, err
+	}
+	defer stmt.Close()
+	var rows *sql.Rows
+	rows, err = stmt.Query()
+	if err != nil {
+		return p, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var s StateChangeParams
+		err = rows.Scan(&s.Host, &s.ChangeThreshold, &s.Action)
+		if err != nil {
+			return p, err
+		}
+		p = append(p, s)
+	}
+	err = rows.Err()
+	if err != nil {
+		return p, err
+	}
+	return p, nil
 }
 
 func (d *MonDBQL) DeleteHostStateChangeParams(newHost string) error {
-	return DeleteHostStateChangeParamsCommon(d.db, newHost)
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+	var stmt *sql.Stmt
+	stmt, err = tx.Prepare("DELETE FROM notifications_params WHERE host IN (SELECT id() FROM hosts WHERE host = $1 LIMIT 1);")
+	if err != nil {
+		e := tx.Rollback()
+		if e != nil {
+			return e
+		}
+		return err
+	}
+
+	_, err = stmt.Exec(newHost)
+	if err != nil {
+		stmt.Close()
+		e := tx.Rollback()
+		if e != nil {
+			return e
+		}
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		e := tx.Rollback()
+		if e != nil {
+			return e
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

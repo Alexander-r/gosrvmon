@@ -16,10 +16,11 @@ type MonDB interface {
 	SaveCheck(host string, checkTime time.Time, rtt int64, up bool) error
 	GetChecksData(chkReq ChecksRequest) (cData []ChecksData, err error)
 	GetLastCheckData(host string) (cData ChecksData, err error)
+	DeleteOldChecks(beforeTime time.Time) error
 	AddHostStateChangeParams(newHost string, newThreshold int64, newAction string) error
 	GetHostStateChangeParams(host string) (p StateChangeParams, err error)
 	GetHostStateChangeParamsList() (p []StateChangeParams, err error)
 	DeleteHostStateChangeParams(newHost string) error
 }
 
-var ErrNoHostInDB = errors.New("no such host in db")
+var ErrNoHostInDB = errors.New("no such host in DB")

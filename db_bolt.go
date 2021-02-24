@@ -28,10 +28,11 @@ func (d *MonDBBolt) Close() error {
 
 func (d *MonDBBolt) Init() error {
 	err := d.db.Batch(func(tx *bbolt.Tx) error {
-		_, e := tx.CreateBucketIfNotExists([]byte("config:hosts"))
+		b, e := tx.CreateBucketIfNotExists([]byte("config:hosts"))
 		if e != nil {
 			return e
 		}
+		b.FillPercent = 0.75
 		return nil
 	})
 	return err
@@ -56,14 +57,16 @@ func (d *MonDBBolt) GetHostsList() (hosts []string, err error) {
 
 func (d *MonDBBolt) AddHost(newHost string) error {
 	err := d.db.Batch(func(tx *bbolt.Tx) error {
-		_, e := tx.CreateBucketIfNotExists([]byte(newHost))
+		h, e := tx.CreateBucketIfNotExists([]byte(newHost))
 		if e != nil {
 			return e
 		}
+		h.FillPercent = 0.95
 		b := tx.Bucket([]byte("config:hosts"))
 		if b == nil {
 			return errors.New("DB not initialised")
 		}
+		b.FillPercent = 0.75
 		var buf []byte = []byte{0, 0, 0, 0, 0, 0, 0, 0}
 		e = b.Put([]byte(newHost), buf)
 		return e
@@ -77,6 +80,7 @@ func (d *MonDBBolt) DeleteHost(newHost string) error {
 		if b == nil {
 			return errors.New("DB not initialised")
 		}
+		b.FillPercent = 0.75
 		e := b.Delete([]byte(newHost))
 		if e != nil {
 			return e
@@ -112,6 +116,7 @@ func (d *MonDBBolt) SaveCheck(host string, checkTime time.Time, rtt int64, up bo
 		if b == nil {
 			return ErrNoHostInDB
 		}
+		b.FillPercent = 0.95
 		var buf []byte = I64ToB(rtt)
 		if up {
 			buf = append(buf, 1)
@@ -181,6 +186,33 @@ func (d *MonDBBolt) GetLastCheckData(host string) (cData ChecksData, err error) 
 	return cData, err
 }
 
+func (d *MonDBBolt) DeleteOldChecks(beforeTime time.Time) error {
+	bt := I64ToB(beforeTime.Unix())
+	err := d.db.Batch(func(tx *bbolt.Tx) error {
+		bh := tx.Bucket([]byte("config:hosts"))
+		if bh == nil {
+			return errors.New("DB not initialised")
+		}
+		ch := bh.Cursor()
+		for h, _ := ch.First(); h != nil; h, _ = ch.Next() {
+			b := tx.Bucket(h)
+			if b == nil {
+				continue
+			}
+			b.FillPercent = 0.95
+			c := b.Cursor()
+			for k, _ := c.First(); k != nil && bytes.Compare(k, bt) <= 0; k, _ = c.Next() {
+				e := b.Delete(k)
+				if e != nil {
+					return e
+				}
+			}
+		}
+		return nil
+	})
+	return err
+}
+
 func (d *MonDBBolt) AddHostStateChangeParams(newHost string, newThreshold int64, newAction string) error {
 	var hostExists bool = false
 	err := d.db.Batch(func(tx *bbolt.Tx) error {
@@ -188,6 +220,7 @@ func (d *MonDBBolt) AddHostStateChangeParams(newHost string, newThreshold int64,
 		if b == nil {
 			return errors.New("DB not initialised")
 		}
+		b.FillPercent = 0.75
 		v := b.Get([]byte(newHost))
 		if v == nil {
 			return nil
@@ -261,6 +294,7 @@ func (d *MonDBBolt) DeleteHostStateChangeParams(newHost string) error {
 		if b == nil {
 			return errors.New("DB not initialised")
 		}
+		b.FillPercent = 0.75
 		v := b.Get([]byte(newHost))
 		if v == nil {
 			return nil
