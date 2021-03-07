@@ -100,6 +100,43 @@ For better authentication control it is advised to set up a reverse proxy web se
  * `MaxRttScale` - Maximum timeout value for chart Y scale (in milliseconds). Default value is `200`.
  * `DynamicRttScale` - if enabled a minimal required timeout value for chart Y scale would be used up to MaxRttScale. If disabled then the scale will always go up to MaxRttScale.
 
+## Notifications
+
+Gosrvmon supports sending notification when host changes state (goes offline or online).
+
+Notifications can be set up at ```/web/notifications_params``` endpoint.
+
+Host should be already set up at ```/web/hosts``` endpoint. It should be entered here exactly as it was entered at ```/web/hosts``` including protocol and port.
+
+Change threshold is the amount of consecutive checks with a new state after which the notification will be sent. For example if you set it to 3 and the host goes offline then the notification will be sent after 3 consecutive checks which show that the host is now offline.
+This setting may be useful if you are using ping check as it is not always reliable and can sometimes fail. So if you get a random packet loss it will not trigger the notification for that check.
+
+Action is an HTTP or HTTPS URL that will be accessed to send the notification. Currently it only supports GET requests.
+
+For example to send the notification to Telegram using bot API action can be set to something like this:
+
+```https://api.telegram.org/bot<token>/sendMessage?chat_id=<chat_id>&text=State%20changed.%20Host%3A%20{HOST}%20New%20state%3A%20{STATE}%20Time%3A%20{TIME}```
+
+```<token>``` should be replaced with bot access token. ```<chat_id>``` should be replaced with chat ID. The message should be URL encoded for the request to work.
+```{HOST}``` will be replaced with the host that triggered the notification. ```{STATE}``` will be replaced by the hosts new state. {TIME} will be replaced by the string containing the time of the event. This parts should not be URL encoded as they are processed before the request is sent.
+
+This will result a notification with this message:
+
+```State changed. Host: 8.8.8.8 New state: down Time: 2021-03-02 12:00:00 +0000 UTC```
+
+You can set it up to work with any other messaging service that provides similar bot API or send e-mail or an SMS message if you have a a gateway that can send messages using an HTTP API call.
+
+In the message you can use the following placeholder strings that will be replaced before the API call with relevant data:
+
+ * ```{HOST}``` - the host that triggered the notification.
+ * ```{TIME}``` - a string with time and date of the event.
+ * ```{TIMESTAMP}``` - unix timestamp of the event.
+ * ```{RTT}``` - rtt of the event that triggered the notification. Will be an actual rtt if the host went online. Will be a timeout if the host went offline.
+ * ```{RTTSTR}``` - rtt as a string.
+ * ```{STATE}``` - will be up if the host went online or down if the host went offline.
+ * ```{UP}``` - will be true if the host is online and false if the host is offline.
+ * ```{DOWN}``` - will be false if the host is online and true if the host is offline.
+
 ## Backup and Restore
 
 Gosrvmon can export hosts list and notification parameters as a json file. You can get the file using GET request on `/api/backup` endpoint:
