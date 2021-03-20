@@ -6,14 +6,8 @@ stages:
 build:
   stage: build
   script:
-  - GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get -tags purego modernc.org/ql
-  - GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get github.com/lib/pq
-  - GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/sys/unix
-  - GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get github.com/Alexander-r/bbolt
-  - GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/icmp
-  - GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/ipv4
-  - GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/ipv6
-  - GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o gosrvmon .
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get -tags purego -d
+  - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags purego -ldflags="-s -w" -o gosrvmon .
 
   artifacts:
     paths:

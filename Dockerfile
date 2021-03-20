@@ -4,15 +4,9 @@ WORKDIR $GOPATH/src/github.com/Alexander-r/gosrvmon
 
 COPY . .
 
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get -tags purego modernc.org/ql
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get github.com/lib/pq
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/sys/unix
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get github.com/Alexander-r/bbolt
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/icmp
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/ipv4
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get golang.org/x/net/ipv6
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go get -tags purego -d
 
-RUN GO111MODULE=off CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags purego -ldflags="-s -w" -o /usr/bin/gosrvmon .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags purego -ldflags="-s -w" -o /usr/bin/gosrvmon .
 RUN cp config.json /etc/gosrvmon.json
 
 FROM scratch

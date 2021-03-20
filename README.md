@@ -9,6 +9,12 @@ Chart example:
 
 ## Setup
 
+Gosrvmon can be installed by checking out the repository and using `go build` command.
+Or you can use `go get github.com/Alexander-r/gosrvmon` command to download the source code and build it. The resulting binary will be located at ```$GOPATH/bin/gosrvmon```.
+
+Binary can be downloaded from GitLab mirror from pipeline artifacts (download artifacts button on the right next to the pipeline) at:
+https://gitlab.com/Sonnix/gosrvmon/-/pipelines
+
 ICMP (ping) checks require permission to create raw socket. This can be done by running application as root or by granting permission using capabilities:
 
 ```
@@ -58,7 +64,15 @@ gosrvmon -config /etc/gosrvmon.json -init
 
 PostgreSQL can also be initialized manually using [init.sql](init.sql).
 
-Host can be added by domain name or by IP address. Check method is selected based on how a host is added for monitoring. `http://example.org/` would result in HTTP check. `example.org:80` would result in TCP check. `example.org` would result in ICMP check. IPv6 hosts are also supported (for example `http://[2606:2800:220:1:248:1893:25c8:1946]\`, `[2606:2800:220:1:248:1893:25c8:1946]:80` , `2606:2800:220:1:248:1893:25c8:1946`). If host is added by domain name which has multiple A and AAAA records and ICMP check method is used then the request will be sent to every address and host is considered online if any of the addresses sends the response.
+## Adding hosts for monitoring
+
+Host can be added by domain name or by IP address. Check method is selected based on how a host is added for monitoring:
+
+ * `http://example.org/` would result in HTTP check.
+ * `example.org:80` would result in TCP check.
+ * `example.org` would result in ICMP check.
+
+IPv6 hosts are also supported (for example `http://[2606:2800:220:1:248:1893:25c8:1946]\`, `[2606:2800:220:1:248:1893:25c8:1946]:80` , `2606:2800:220:1:248:1893:25c8:1946`). If host is added by domain name which has multiple A and AAAA records and ICMP check method is used then the request will be sent to every address and host is considered online if any of the addresses sends the response.
 
 For HTTP checks host is considered available only if 2XX or 3XX response code was received. Any other response code (such as 404 or 401) will be considered as server being offline.
 
