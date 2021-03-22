@@ -132,14 +132,14 @@ rect.i {
 		chart.WriteString("\" y=\"")
 		chart.WriteString(strconv.FormatFloat(float64(height)-float64(fontSize)*1.6, 'f', -1, 64))
 		chart.WriteString("\">")
-		chart.WriteString(chkReq.Start.Truncate(dt).Add(time.Duration(stepT*i) * time.Nanosecond).Format("06-01-02"))
+		chart.WriteString(chkReq.Start.Truncate(dt).Add(time.Duration(stepT*i) * time.Nanosecond).In(ChecksTZ).Format("06-01-02"))
 		chart.WriteString("</text>\n")
 		chart.WriteString("<text x=\"")
 		chart.WriteString(strconv.FormatFloat(float64(xOffset)+stepPx*float64(i), 'f', -1, 64))
 		chart.WriteString("\" y=\"")
 		chart.WriteString(strconv.FormatFloat(float64(height)-float64(fontSize)*0.6, 'f', -1, 64))
 		chart.WriteString("\">")
-		chart.WriteString(chkReq.Start.Truncate(dt).Add(time.Duration(stepT*i) * time.Nanosecond).Format("15:04:05"))
+		chart.WriteString(chkReq.Start.Truncate(dt).Add(time.Duration(stepT*i) * time.Nanosecond).In(ChecksTZ).Format("15:04:05"))
 		chart.WriteString("</text>\n")
 	}
 	//y axis milliseconds

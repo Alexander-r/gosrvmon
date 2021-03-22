@@ -24,8 +24,6 @@ const hostViewTemplateDoc string = `<!DOCTYPE html>
   <input type="button" value="&larr;" onclick="showPrev()"><input type="button" value="&rarr;" onclick="showNext()">
 </form>
 
-
-
 <div id="chart" style="margin-top: 25px;"><img alt="Chart" src="` + ChecksChartEndpoint + `?host={{.}}"></div>
 
 <script>

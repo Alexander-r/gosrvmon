@@ -11,7 +11,7 @@ import (
 
 func PrepareEventAction(host string, rtt int64, checkTime time.Time, up bool, action string) string {
 	action = strings.ReplaceAll(action, "{HOST}", url.QueryEscape(host))
-	action = strings.ReplaceAll(action, "{TIME}", url.QueryEscape(checkTime.String()))
+	action = strings.ReplaceAll(action, "{TIME}", url.QueryEscape(checkTime.In(ChecksTZ).String()))
 	action = strings.ReplaceAll(action, "{TIMESTAMP}", strconv.FormatInt(checkTime.Unix(), 10))
 	action = strings.ReplaceAll(action, "{RTT}", strconv.FormatInt(rtt, 10))
 	var rttstr time.Duration = time.Duration(rtt) * time.Nanosecond

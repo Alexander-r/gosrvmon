@@ -40,6 +40,7 @@ type Configuration struct {
 	Chart struct {
 		MaxRttScale     int64
 		DynamicRttScale bool
+		TimeZone        string
 	}
 }
 
@@ -103,6 +104,9 @@ func loadConfiguration() error {
 	}
 	if Config.DB.Database == "" {
 		Config.DB.Type = "ql"
+	}
+	if Config.Chart.TimeZone == "" {
+		Config.Chart.TimeZone = "UTC"
 	}
 	return nil
 }

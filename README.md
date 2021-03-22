@@ -113,6 +113,7 @@ For better authentication control it is advised to set up a reverse proxy web se
 ### Chart
  * `MaxRttScale` - Maximum timeout value for chart Y scale (in milliseconds). Default value is `200`.
  * `DynamicRttScale` - if enabled a minimal required timeout value for chart Y scale would be used up to MaxRttScale. If disabled then the scale will always go up to MaxRttScale.
+ * `TimeZone` - time zone name in which to display dates to user on charts. Time zone name can be `UTC` for UTC, `Local` for local time or a location name from  IANA Time Zone database (for example `America/New_York`). Default value is `UTC`.
 
 ## Notifications
 

@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"sort"
 	"time"
 )
 
@@ -31,12 +32,6 @@ const checksTemplateDoc string = `<!DOCTYPE html>
 </html>
 `
 
-type ChecksPageData struct {
-	Created bool
-	Deleted bool
-	Hosts   []string
-}
-
 var checksTemplate = template.Must(template.New("Checks Template").Parse(checksTemplateDoc))
 
 const ChecksTemplateHandlerEndpoint string = "/web/checks"
@@ -59,7 +54,7 @@ func ChecksTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	//RemoteChecks
 	dataM := make(map[time.Time]ChecksData)
 	for _, d := range data {
-		dataM[d.Timestamp.UTC()] = d
+		dataM[d.Timestamp.UTC()] = ChecksData{Timestamp: d.Timestamp.In(ChecksTZ), Rtt: d.Rtt, Up: d.Up}
 	}
 
 	if Config.Checks.UseRemoteChecks {
@@ -76,18 +71,25 @@ func ChecksTemplateHandler(w http.ResponseWriter, r *http.Request) {
 				if ok {
 					if dr.Up {
 						if !dl.Up {
-							dataM[dr.Timestamp] = dr
+							dataM[dr.Timestamp] = ChecksData{Timestamp: dr.Timestamp.In(ChecksTZ), Rtt: dr.Rtt, Up: dr.Up}
 						} else if dr.Rtt < dl.Rtt {
-							dataM[dr.Timestamp] = dr
+							dataM[dr.Timestamp] = ChecksData{Timestamp: dr.Timestamp.In(ChecksTZ), Rtt: dr.Rtt, Up: dr.Up}
 						}
 					}
 				} else {
-					dataM[dr.Timestamp] = dr
+					dataM[dr.Timestamp] = ChecksData{Timestamp: dr.Timestamp.In(ChecksTZ), Rtt: dr.Rtt, Up: dr.Up}
 				}
 			}
 		}
 	}
 	//RemoteChecks end
+	data = nil
+	for _, d := range dataM {
+		data = append(data, d)
+	}
+	sort.SliceStable(data, func(i, j int) bool {
+		return data[i].Timestamp.UnixNano() < data[j].Timestamp.UnixNano()
+	})
 
 	err = checksTemplate.Execute(w, data)
 	if err != nil {

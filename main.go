@@ -41,6 +41,8 @@ var doProcess bool = true
 
 var hostnameRegex = regexp.MustCompile(`^[[:alnum:]][[:alnum:]\-]{0,61}[[:alnum:]]|[[:alpha:]]$`)
 
+var ChecksTZ *time.Location
+
 func isHostOrIP(host string) bool {
 	if len(host) > 256 {
 		return false
@@ -181,6 +183,16 @@ func main() {
 	err = loadConfiguration()
 	if err != nil {
 		log.Printf("[ERROR] %v", err)
+		return
+	}
+	ChecksTZ, err = time.LoadLocation(Config.Chart.TimeZone)
+	if err != nil {
+		log.Println("[WARNING] unknown time zone name")
+		ChecksTZ, err = time.LoadLocation("Local")
+		if err != nil || ChecksTZ == nil {
+			log.Printf("[ERROR] %v", err)
+			return
+		}
 		return
 	}
 
