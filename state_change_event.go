@@ -15,6 +15,7 @@ type StateChangeParams struct {
 type StateChangeData struct {
 	LastTimeObserved time.Time `json:"observed"`
 	State            bool      `json:"state"`
+	ChangeCount      int64     `json:"count"`
 }
 
 var CheckStates map[string]StateChangeData = make(map[string]StateChangeData)
@@ -33,23 +34,29 @@ func checkStateChange(host string, rtt int64, checkTime time.Time, up bool) {
 	CheckStatesMux.RUnlock()
 	if !ok {
 		CheckStatesMux.Lock()
-		CheckStates[host] = StateChangeData{checkTime, up}
+		CheckStates[host] = StateChangeData{checkTime, up, 0}
 		CheckStatesMux.Unlock()
 		return
 	}
 	if checkState.State == up {
 		CheckStatesMux.Lock()
-		CheckStates[host] = StateChangeData{checkTime, checkState.State}
+		CheckStates[host] = StateChangeData{checkTime, checkState.State, 0}
 		CheckStatesMux.Unlock()
 		return
-	}
-	if checkTime.Sub(checkState.LastTimeObserved).Milliseconds()/1000 > checkParams.ChangeThreshold {
-		CheckStatesMux.Lock()
-		CheckStates[host] = StateChangeData{checkTime, up}
-		CheckStatesMux.Unlock()
-		err = EventHTTPNotify(host, rtt, checkTime, up, checkParams.Action)
-		if err != nil {
-			log.Printf("[ERROR] %v", err)
+	} else {
+		newCount := checkState.ChangeCount + 1
+		if newCount >= checkParams.ChangeThreshold {
+			CheckStatesMux.Lock()
+			CheckStates[host] = StateChangeData{checkTime, up, 0}
+			CheckStatesMux.Unlock()
+			err = EventHTTPNotify(host, rtt, checkTime, up, checkParams.Action)
+			if err != nil {
+				log.Printf("[ERROR] %v", err)
+			}
+		} else {
+			CheckStatesMux.Lock()
+			CheckStates[host] = StateChangeData{checkTime, checkState.State, newCount}
+			CheckStatesMux.Unlock()
 		}
 	}
 }
